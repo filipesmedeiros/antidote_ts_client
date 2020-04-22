@@ -6,6 +6,8 @@ import ProtoBuf = require("protobufjs")
 import ByteBuffer = require("bytebuffer")
 import { connect } from "./antidote"
 
+const counters: { [counterId: string]: number } = {}
+
 interface ApbRequest {
 	resolve: (a: any) => void
 	reject: (a: any) => void
@@ -85,7 +87,12 @@ export class MultidoteServer {
 	}
 
 	private handleRequest(code: number, decoded: any) {
-		console.log(`Got request with code ${code}`)
+		if (code === MessageCodes.apbStaticUpdateObjects) {
+			if (counters[decoded.updates[0].boundobject.key.toUTF8()] === undefined)
+				counters[decoded.updates[0].boundobject.key.toUTF8()] = 0
+			counters[decoded.updates[0].boundobject.key.toUTF8()] +=
+				decoded.updates[0].operation.counterop.inc.low
+		} else console.log(code)
 	}
 }
 

@@ -29,8 +29,6 @@ export module MessageCodes {
 	var antidoteProtoSrc = path.join(__dirname, '..', 'proto', 'antidote.proto');
 	export var antidotePb: AntidotePB.ProtoBufBuilder = ProtoBuf.protoFromFile(antidoteProtoSrc).build("AntidotePB");
 
-	console.log(antidotePb.ApbStaticUpdateObjects)
-
 	export function messageCodeToProto(code: number): any {
 		switch (code) {
 			case apbRegUpdate:
