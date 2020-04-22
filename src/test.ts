@@ -15,7 +15,7 @@ var Long = require("long")
 
 describe("antidote client", function () {
 	// 60 second timeout, because travis sometimes needs longer
-	let timeout = 60000
+	let timeout = 6000
 	this.timeout(timeout)
 	let connection: Connection
 
