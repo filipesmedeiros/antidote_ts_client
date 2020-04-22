@@ -1,8 +1,9 @@
+syntax = "proto2";
+
 // Java package specifiers
 package AntidotePB;
 option java_package = "com.basho.riak.protobuf";
 option java_outer_classname = "AntidotePB";
-
 
 enum CRDT_type {
     COUNTER = 3;

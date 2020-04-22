@@ -29,6 +29,8 @@ export module MessageCodes {
 	var antidoteProtoSrc = path.join(__dirname, '..', 'proto', 'antidote.proto');
 	export var antidotePb: AntidotePB.ProtoBufBuilder = ProtoBuf.protoFromFile(antidoteProtoSrc).build("AntidotePB");
 
+	console.log(antidotePb.ApbStaticUpdateObjects)
+
 	export function messageCodeToProto(code: number): any {
 		switch (code) {
 			case apbRegUpdate:
@@ -62,7 +64,7 @@ export module MessageCodes {
 			case apbCommitTransaction:
 				return antidotePb.ApbCommitTransaction;
 			case apbStaticUpdateObjects:
-				return antidotePb.ApbUpdateObjects;
+				return antidotePb.ApbStaticUpdateObjects;
 			case apbStaticReadObjects:
 				return antidotePb.ApbStaticReadObjects;
 			case apbStartTransactionResp:

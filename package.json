@@ -38,5 +38,10 @@
     "prepublish": "npm run compile",
     "typedoc": "typedoc --mode modules --out docs/ src/antidote.ts --tsconfig tsconfig.json --readme manual.md && npm run postprocesstypedoc && touch docs/.nojekyll",
     "postprocesstypedoc": "find docs/ -type f -iname '*.html' -exec sed -i 's/\\/blob\\/[a-z0-9]\\+\\//\\/blob\\/master\\//g' \"{}\" +;"
+  },
+  "prettier": {
+    "useTabs": true,
+    "arrowParens": "avoid",
+    "semi": false
   }
 }
