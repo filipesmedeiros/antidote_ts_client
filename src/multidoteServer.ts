@@ -1,38 +1,36 @@
 import net = require('net')
 import ByteBuffer = require('bytebuffer')
 import { MessageCodes } from './messageCodes'
+import { encode } from './antidote'
 
 const counters: { [counterId: string]: number } = {}
 
 export class MultidoteServer {
-	private socket: net.Socket | undefined
+	private server: net.Server | undefined
 	private buffer: ByteBuffer = new ByteBuffer()
-	private port: number
 
 	constructor(port: number) {
-		this.port = port
-
-		net
+		this.server = net
 			.createServer(socket => {
-				socket.on('data', data => this.onData(data))
+				socket.on('data', data => this.onData(data, socket))
 			})
 			.listen(port)
 	}
 
 	public close() {
-		if (this.socket) {
-			this.socket.destroy()
-			this.socket = undefined
+		if (this.server) {
+			this.server.close()
+			this.server = undefined
 		}
 	}
 
-	private onData(data: Buffer) {
+	private onData(data: Buffer, socket: net.Socket) {
 		this.buffer.append(data)
 		this.buffer.flip()
-		this.readMessagesFromBuffer()
+		this.readMessagesFromBuffer(socket)
 	}
 
-	private readMessagesFromBuffer() {
+	private readMessagesFromBuffer(socket: net.Socket) {
 		let buffer = this.buffer
 		while (buffer.remaining() >= 4) {
 			buffer.mark()
@@ -55,7 +53,7 @@ export class MultidoteServer {
 				// otherwise, subsequent fetches will clobber data
 				decoded = ResponseProto.decode(slice.toBuffer(true))
 			}
-			this.handleRequest(code, decoded)
+			this.handleRequest(code, decoded, socket)
 
 			// skip past message in buffer
 			buffer.skip(messageLength)
@@ -75,12 +73,46 @@ export class MultidoteServer {
 		buffer.limit = buffer.capacity()
 	}
 
-	private handleRequest(code: number, decoded: any) {
+	private handleRequest(code: number, decoded: any, socket: net.Socket) {
 		if (code === MessageCodes.apbStaticUpdateObjects) {
 			if (counters[decoded.updates[0].boundobject.key.toUTF8()] === undefined)
 				counters[decoded.updates[0].boundobject.key.toUTF8()] = 0
 			counters[decoded.updates[0].boundobject.key.toUTF8()] +=
 				decoded.updates[0].operation.counterop.inc.low
+
+			let apbStartTransactionResp =
+				MessageCodes.antidotePb.ApbStartTransactionResp
+			let message: AntidotePB.ApbStartTransactionMessage = new apbStartTransactionResp(
+				{ success: true }
+			)
+			this.sendResponse(
+				MessageCodes.apbStartTransactionResp,
+				encode(message),
+				socket
+			)
 		} else console.log(code)
+	}
+
+	private sendResponse(
+		messageCode: number,
+		encodedMessage: ArrayBuffer,
+		socket: net.Socket
+	): void {
+		// For now, ignore disconnected clients
+		// if (!this.socket) {
+		// 	// try to reconnect:
+		// 	this.reconnect()
+		// }
+		if (!this.server) {
+			console.log('Could not access socket.')
+			return
+		}
+
+		let header = Buffer.alloc(5)
+		header.writeInt32BE(encodedMessage.byteLength + 1, 0)
+		header.writeUInt8(messageCode, 4)
+
+		let msg = Buffer.concat([header, Buffer.from(encodedMessage)])
+		socket.write(msg)
 	}
 }

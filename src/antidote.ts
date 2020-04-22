@@ -26,7 +26,7 @@ function key(key: string, type: AntidotePB.CRDT_type, bucket: string): AntidoteP
 }
 
 /** takes a message with an encode method and converts it into an ArrayBuffer */
-function encode(message: { encode(): ByteBuffer } | any): ArrayBuffer {
+export function encode(message: { encode(): ByteBuffer } | any): ArrayBuffer {
 	return message.encode().toBuffer()
 }
 
