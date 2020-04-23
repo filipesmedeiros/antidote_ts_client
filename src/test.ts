@@ -30,8 +30,8 @@ describe('antidote client', function () {
 		describe(impl.name, () => {
 			it('should count', async () => {
 				let counter: CrdtCounter = impl.create(`my${impl.name}`)
-				console.log(await connection.update(counter.increment(3)))
 				let val = await counter.read()
+				console.log(val)
 				assert.equal(val, 3)
 			})
 

@@ -74,23 +74,8 @@ export class MultidoteServer {
 	}
 
 	private handleRequest(code: number, decoded: any, socket: net.Socket) {
-		if (code === MessageCodes.apbStaticUpdateObjects) {
-			if (counters[decoded.updates[0].boundobject.key.toUTF8()] === undefined)
-				counters[decoded.updates[0].boundobject.key.toUTF8()] = 0
-			counters[decoded.updates[0].boundobject.key.toUTF8()] +=
-				decoded.updates[0].operation.counterop.inc.low
-
-			let apbStartTransactionResp =
-				MessageCodes.antidotePb.ApbStartTransactionResp
-			let message: AntidotePB.ApbStartTransactionMessage = new apbStartTransactionResp(
-				{ success: true }
-			)
-			this.sendResponse(
-				MessageCodes.apbStartTransactionResp,
-				encode(message),
-				socket
-			)
-		} else console.log(code)
+		const { respCode, resp } = RequestHandlers[code](decoded)
+		this.sendResponse(respCode, encode(resp), socket)
 	}
 
 	private sendResponse(
@@ -115,4 +100,65 @@ export class MultidoteServer {
 		let msg = Buffer.concat([header, Buffer.from(encodedMessage)])
 		socket.write(msg)
 	}
+}
+
+interface RequestHandlersI {
+	[messageCode: number]: (
+		req: any
+	) => { respCode: number; resp: { encode: () => ArrayBuffer } }
+}
+
+const RequestHandlers: RequestHandlersI = {
+	[MessageCodes.apbRegUpdate]: req => ({
+		respCode: MessageCodes.apbGetRegResp,
+		resp: { encode: () => Buffer.alloc(4) },
+	}),
+	[MessageCodes.apbCounterUpdate]: req => ({
+		respCode: 0,
+		resp: { encode: () => Buffer.alloc(4) },
+	}),
+	[MessageCodes.apbSetUpdate]: req => ({
+		respCode: 0,
+		resp: { encode: () => Buffer.alloc(4) },
+	}),
+	[MessageCodes.apbTxnProperties]: req => ({
+		respCode: 0,
+		resp: { encode: () => Buffer.alloc(4) },
+	}),
+	[MessageCodes.apbBoundObject]: req => ({
+		respCode: 0,
+		resp: { encode: () => Buffer.alloc(4) },
+	}),
+	[MessageCodes.apbReadObjects]: req => ({
+		respCode: MessageCodes.apbReadObjectsResp,
+		resp: { encode: () => Buffer.alloc(4) },
+	}),
+	[MessageCodes.apbUpdateOp]: req => ({
+		respCode: 0,
+		resp: { encode: () => Buffer.alloc(4) },
+	}),
+	[MessageCodes.apbUpdateObjects]: req => ({
+		respCode: 0,
+		resp: { encode: () => Buffer.alloc(4) },
+	}),
+	[MessageCodes.apbStartTransaction]: req => ({
+		respCode: MessageCodes.apbStartTransactionResp,
+		resp: { encode: () => Buffer.alloc(4) },
+	}),
+	[MessageCodes.apbAbortTransaction]: req => ({
+		respCode: 0,
+		resp: { encode: () => Buffer.alloc(4) },
+	}),
+	[MessageCodes.apbCommitTransaction]: req => ({
+		respCode: MessageCodes.apbCommitResp,
+		resp: { encode: () => Buffer.alloc(4) },
+	}),
+	[MessageCodes.apbStaticUpdateObjects]: req => ({
+		respCode: 0,
+		resp: { encode: () => Buffer.alloc(4) },
+	}),
+	[MessageCodes.apbStaticReadObjects]: req => ({
+		respCode: MessageCodes.apbStaticReadObjectsResp,
+		resp: { encode: () => Buffer.alloc(4) },
+	}),
 }
